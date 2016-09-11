@@ -3,6 +3,7 @@ contract verifyIPFS {
   bytes prefix1 = new bytes(1);
   bytes prefix2 = new bytes(3);
   bytes postfix = new bytes(1);
+  bytes sha256MultiHash = new bytes(2);
   bytes constant ALPHABET = '123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz';
 
   function verifyIPFS() {
@@ -11,35 +12,28 @@ contract verifyIPFS {
     prefix2[1] = byte(0x02);
     prefix2[2] = byte(0x12);
     postfix[0] = byte(0x18);
+    sha256MultiHash[0] = byte(0x12);
+    sha256MultiHash[1] = byte(0x20);
   }
 
   function generateHash(string contentString) constant returns (bytes) {
     bytes memory content = bytes(contentString);
-    bytes memory len;
-    bytes memory len2;
-    if (content.length < 122) { //Encode length immediately
-      len = to_binary(content.length);
-      len2 = to_binary(6 + content.length);
-      //return len;
-    } else if (content.length < 128) {
-      len = to_binary(content.length);
-      len2 = concat(to_binary(6 + content.length), toBytes2(byte(0x01)));
-    }
-    else {
-      len2 = concat(to_binary(8 + content.length), toBytes2(byte(0x01)));
-      len = concat(to_binary(content.length), toBytes2(byte(0x01)));
-      //len = concat(toBytes2(byte(0xff)), concat(toBytes2(byte(0xfd)), (to_binary(content.length / 128))));
-    }
-    bytes memory standardMultiHash = new bytes(2);
-    standardMultiHash[0] = byte(0x12);
-    standardMultiHash[1] = byte(0x20);
-    //return sha256 hash of the protobuf message;
-    //return concat(prefix1, concat(len2, concat(prefix2, concat(len, concat(postfix, len)))));
-    return bs58(concat(standardMultiHash, toBytes(sha256(prefix1, len2, prefix2, len, content, postfix, len))));
+    bytes memory len = lengthEncode(content.length);
+    bytes memory len2 = lengthEncode(content.length + 4 + 2*len.length);
+    return bs58(concat(sha256MultiHash, toBytes(sha256(prefix1, len2, prefix2, len, content, postfix, len))));
   }
 
-  function length(string content) constant returns (bytes) {
-    return to_binary(bytes(content).length);
+  function verifyHash(string contentString, string hash) constant returns (bool) {
+    return equal(generateHash(contentString), bytes(hash));
+  }
+
+  function lengthEncode(uint256 length) returns (bytes) {
+    if (length < 128) {
+      return to_binary(length);
+    }
+    else {
+      return concat(to_binary(length % 128 + 128), to_binary(length / 128));
+    }
   }
 
   function toBytes(bytes32 input) returns (bytes) {
@@ -47,12 +41,6 @@ contract verifyIPFS {
     for (uint8 i = 0; i<32; i++) {
       output[i] = input[i];
     }
-    return output;
-  }
-
-  function toBytes2(byte input) returns (bytes) {
-    bytes memory output = new bytes(1);
-    output[0] = input;
     return output;
   }
     
