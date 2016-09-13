@@ -1,23 +1,51 @@
 # verifyIPFS
 
-Produces hashes based on content, so that one can verify that content belongs to a certain IPFS object.
+Smart contract library functions for recreating the hash of an ipfs object given its content.
 
-Now correctly verifies content up to ~245 bytes. Working on figuring out the details of the protofbuf encoding to be able to support longer files
-
-Usage:
-Compare
+# Usage
+Add the data file to IPFS:
 
 ```
-truffle(default)> t.generateHash('999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999123456781111111111111111111111111111111ssssssssssssssssssssssssssssaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa76111111111asd\n').then(s => {console.log(web3.toAscii(s))})
-Promise { <pending> }
-truffle(default)> QmWVwZLYuMaa964opfQNkKrPhXrdauQ1V8B95xsgEjzGPC
+ipfs add testfile -q
 ```
 
-with
-
+Will return:
 ```
-echo '999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999123456781111111111111111111111111111111ssssssssssssssssssssssssssssaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa76111111111asd' | ipfs add -q
-QmWVwZLYuMaa964opfQNkKrPhXrdauQ1V8B95xsgEjzGPC
+QmRsjnNkEpnDdmYB7wMR7FSy1eGZ12pDuhST3iNLJTzAXF
 ```
 
-notice the newline `\n` needs to be added, since echo returns the content and a newline
+Now try the same thing with the `generateHash`-function:
+
+(truffle console)
+```
+truffle(default)> fs = require('fs')
+truffle(default)> var verify; verifyIPFS.new().then(a => {verify = a})
+truffle(default)> var testfile = fs.readFileSync('./testfile').toString()
+truffle(default)> verify.generateHash(testfile).then(a => {console.log(web3.toAscii(a))})
+```
+returns
+```
+QmRsjnNkEpnDdmYB7wMR7FSy1eGZ12pDuhST3iNLJTzAXF
+```
+
+# Functions:
+
+`generateHash` returns the IPFS-hash in byte format of a given string:
+```
+function generateHash(string contentString) constant returns (bytes)
+```
+
+`verifyHash` takes a string and an IPFS-hash, and returns `true` if they match:
+```
+function verifyHash(string contentString, string hash) constant returns (bool) {
+```
+
+`toBase58` converts `bytes` from hex format to base58:
+```
+function toBase58(bytes source) constant returns (bytes) {
+```
+
+
+# Why this is useful:
+This allows you to store large data files on the blockchain by their IPFS hash instead of directly in contract storage. If you at a later point need any part of the data on the blockchain, you can submit it with a transaction, validate it cryptographically using this contract and then do your computations only referring to the contents of the IPFS object in memory!
+
