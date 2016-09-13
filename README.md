@@ -45,6 +45,11 @@ function verifyHash(string contentString, string hash) constant returns (bool) {
 function toBase58(bytes source) constant returns (bytes) {
 ```
 
+# Limitations:
+
+Does not work for IPFS objects that are in several chunks.
+Contact me if you find an IPFS object in one chunk that does not work.
+
 
 # Why this is useful:
 This allows you to store large data files on the blockchain by their IPFS hash instead of directly in contract storage. If you at a later point need any part of the data on the blockchain, you can submit it with a transaction, validate it cryptographically using this contract and then do your computations only referring to the contents of the IPFS object in memory!

@@ -1,11 +1,16 @@
 pragma solidity ^0.4.0;
 library verifyIPFS {
+  /// @title verifyIPFS
+  /// @author Martin Lundfall (martin.lundfall@consensys.net)
   bytes constant prefix1 = hex"0a";
   bytes constant prefix2 = hex"080212";
   bytes constant postfix = hex"18";
   bytes constant sha256MultiHash = hex"1220";
   bytes constant ALPHABET = '123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz';
 
+  /// @dev generates the corresponding IPFS hash (in base 58) to the given string
+  /// @param contentString The content of the IPFS object
+  /// @return The IPFS hash in base 58
   function generateHash(string contentString) constant returns (bytes) {
     bytes memory content = bytes(contentString);
     bytes memory len = lengthEncode(content.length);
@@ -13,12 +18,13 @@ library verifyIPFS {
     return toBase58(concat(sha256MultiHash, toBytes(sha256(prefix1, len2, prefix2, len, content, postfix, len))));
   }
 
+  /// @dev Compares an IPFS hash with content
   function verifyHash(string contentString, string hash) constant returns (bool) {
     return equal(generateHash(contentString), bytes(hash));
   }
   
   
-  //converts hex string to base 58
+  /// @dev Converts hex string to base 58
   function toBase58(bytes source) constant returns (bytes) {
     if (source.length == 0) return new bytes(0);
         uint8[] memory digits = new uint8[](40); //TODO: figure out exactly how much is needed
