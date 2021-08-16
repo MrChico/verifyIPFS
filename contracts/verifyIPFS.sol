@@ -103,7 +103,7 @@ library verifyIPFS {
 
   function concat(bytes memory byteArray, bytes memory byteArray2) internal pure returns (bytes memory) {
     bytes memory returnArray = new bytes(byteArray.length + byteArray2.length);
-    uint16 i = 0;
+    uint i = 0;
     for (i; i < byteArray.length; i++) {
       returnArray[i] = byteArray[i];
     }
